@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useReducer, useMemo, ChangeEvent } from 'react';
-import './App.css';
+import React, { useState, useReducer, useMemo, ChangeEvent } from "react";
+import "./App.css";
 
 type Task = {
   id: number;
@@ -9,15 +9,15 @@ type Task = {
 };
 
 type Action =
-  | { type: 'ADD_CATEGORY'; payload: string }
-  | { type: 'ADD_TASK'; payload: Task }
-  | { type: 'EDIT_TASK'; payload: { id: number; newText: string } }
-  | { type: 'DELETE_TASK'; payload: number }
-  | { type: 'TOGGLE_TASK'; payload: number };
+  | { type: "ADD_CATEGORY"; payload: string }
+  | { type: "ADD_TASK"; payload: Task }
+  | { type: "EDIT_TASK"; payload: { id: number; newText: string } }
+  | { type: "DELETE_TASK"; payload: number }
+  | { type: "TOGGLE_TASK"; payload: number };
 
 const categoriesReducer = (state: string[], action: Action): string[] => {
   switch (action.type) {
-    case 'ADD_CATEGORY':
+    case "ADD_CATEGORY":
       return [...state, action.payload];
     default:
       return state;
@@ -26,20 +26,29 @@ const categoriesReducer = (state: string[], action: Action): string[] => {
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>([
-    { id: 1, text: 'Create a new task', completed: false, category: 'Personal' },
-    { id: 2, text: 'Edit existing task', completed: false, category: 'Work' },
-    { id: 3, text: 'Delete task', completed: false, category: 'Personal' },
+    {
+      id: 1,
+      text: "Create a new task",
+      completed: false,
+      category: "Personal",
+    },
+    { id: 2, text: "Edit existing task", completed: false, category: "Work" },
+    { id: 3, text: "Delete task", completed: false, category: "Personal" },
   ]);
 
-  const [newTask, setNewTask] = useState<string>('');
+  const [newTask, setNewTask] = useState<string>("");
   const [editingTask, setEditingTask] = useState<number | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [categories, dispatchCategories] = useReducer(categoriesReducer, ['Personal', 'Work']);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [sortCriteria, setSortCriteria] = useState<string>('id');
+  const [categories, dispatchCategories] = useReducer(categoriesReducer, [
+    "Personal",
+    "Work",
+  ]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [sortCriteria, setSortCriteria] = useState<string>("id");
+  const [filterCategory, setFilterCategory] = useState<string | null>(null);
 
   const handleAddTask = () => {
-    if (newTask.trim() === '') {
+    if (newTask.trim() === "") {
       return;
     }
 
@@ -47,11 +56,11 @@ function App() {
       id: tasks.length + 1,
       text: newTask,
       completed: false,
-      category: 'Personal', // Default category
+      category: "Personal", // Default category
     };
 
     setTasks([...tasks, newTaskObject]);
-    setNewTask('');
+    setNewTask("");
   };
 
   const handleEditTask = (taskId: number) => {
@@ -71,7 +80,7 @@ function App() {
   };
 
   const handleAddCategory = (newCategory: string) => {
-    dispatchCategories({ type: 'ADD_CATEGORY', payload: newCategory });
+    dispatchCategories({ type: "ADD_CATEGORY", payload: newCategory });
   };
 
   const handleToggleTask = (taskId: number) => {
@@ -86,11 +95,19 @@ function App() {
     setSortCriteria(e.target.value);
   };
 
+  const handleFilterCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    if(e.target.value === 'All') {
+      setFilterCategory(null);
+    } {
+      setFilterCategory(e.target.value);
+    }
+  };
+
   const sortedTasks = useMemo(() => {
     return [...tasks].sort((a, b) => {
-      if (sortCriteria === 'text') {
+      if (sortCriteria === "text") {
         return a.text.localeCompare(b.text);
-      } else if (sortCriteria === 'category') {
+      } else if (sortCriteria === "category") {
         return a.category.localeCompare(b.category);
       } else {
         return a.id - b.id;
@@ -99,10 +116,12 @@ function App() {
   }, [tasks, sortCriteria]);
 
   const filteredTasks = useMemo(() => {
-    return sortedTasks.filter((task) =>
-      task.text.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [sortedTasks, searchTerm]);
+    return sortedTasks
+      .filter((task) =>
+        task.text.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .filter((task) => (filterCategory ? task.category === filterCategory : true));
+  }, [sortedTasks, searchTerm, filterCategory]);
 
   return (
     <div className="App">
@@ -113,7 +132,9 @@ function App() {
           type="text"
           placeholder="Enter a new task"
           value={newTask}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setNewTask(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setNewTask(e.target.value)
+          }
         />
         <button onClick={handleAddTask}>Add Task</button>
       </div>
@@ -123,7 +144,9 @@ function App() {
           type="text"
           placeholder="Search for tasks"
           value={searchTerm}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+            setSearchTerm(e.target.value)
+          }
         />
       </div>
 
@@ -133,6 +156,18 @@ function App() {
           <option value="id">ID</option>
           <option value="text">Text</option>
           <option value="category">Category</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Filter by Category:</label>
+        <select value={filterCategory || 'All'} onChange={handleFilterCategoryChange}>
+          <option value="All">All</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
         </select>
       </div>
 
